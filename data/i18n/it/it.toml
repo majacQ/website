@@ -46,6 +46,15 @@ other = "Io Sono..."
 [docs_label_users]
 other = "Utenti"
 
+[docs_version_current]
+other = "(questa documentazione)"
+
+[docs_version_latest_heading]
+other = "Ultima versione"
+
+[docs_version_other_heading]
+other = "Versioni precedenti"
+
 [feedback_heading]
 other = "Feedback"
 
@@ -148,7 +157,7 @@ other = "Caratteristiche di Kubernetes"
 [main_kubeweekly_baseline]
 other = "Sei interessato a ricevere le ultime notizie su Kubernetes? Registrati alla newsletter KubeWeekly."
 
-[main_kubernetes_past_link]
+[main_kubeweekly_past_link]
 other = "Vedi le precedenti mail della newsletter"
 
 [main_kubeweekly_signup]

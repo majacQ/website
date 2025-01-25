@@ -57,7 +57,7 @@ do gerenciador de controle - kube-controller-manager.
 ## Formato do _secret_ dos tokens de inicialização
  
 Cada token válido possui um _secret_ no namespace `kube-system`. Você pode
-encontrar a documentação completa [aqui](https://github.com/kubernetes/community/blob/{{< param "githubbranch" >}}/contributors/design-proposals/cluster-lifecycle/bootstrap-discovery.md).
+encontrar a documentação completa [aqui](https://github.com/kubernetes/design-proposals-archive/blob/main/cluster-lifecycle/bootstrap-discovery.md).
  
 Um _secret_ de token se parece com o exemplo abaixo:
  
@@ -99,7 +99,7 @@ Os membros listados em `usage-bootstrap-*` indicam qual a intenção de uso dest
  
 O campo `expiration` controla a expiração do token. Tokens expirados são
 rejeitados quando usados para autenticação e ignorados durante assinatura de ConfigMaps.
-O valor de expiração é codificado como um tempo absoluto UTC utilizando a RFC3339. Para automaticamente
+O valor de expiração é codificado como um tempo absoluto UTC utilizando a [RFC3339](https://datatracker.ietf.org/doc/html/rfc3339). Para automaticamente
 remover tokens expirados basta habilitar o controlador `tokencleaner`.
  
 ## Gerenciamento de tokens com kubeadm

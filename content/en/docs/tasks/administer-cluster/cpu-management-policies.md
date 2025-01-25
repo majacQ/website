@@ -4,12 +4,15 @@ reviewers:
 - sjenning
 - ConnorDoyle
 - balajismaniam
+
 content_type: task
+min-kubernetes-server-version: v1.26
+weight: 140
 ---
 
 <!-- overview -->
 
-{{< feature-state for_k8s_version="v1.12" state="beta" >}}
+{{< feature-state for_k8s_version="v1.26" state="stable" >}}
 
 Kubernetes keeps many aspects of how pods execute on nodes abstracted
 from the user. This is by design.  However, some workloads require
@@ -18,19 +21,24 @@ acceptably. The kubelet provides methods to enable more complex workload
 placement policies while keeping the abstraction free from explicit placement
 directives.
 
+For detailed information on resource management, please refer to the
+[Resource Management for Pods and Containers](/docs/concepts/configuration/manage-resources-containers)
+documentation.
 
-
+For detailed information on how the kubelet implements resource management, please refer to the
+[Node ResourceManagers](/docs/concepts/policy/node-resource-managers) documentation.
 
 ## {{% heading "prerequisites" %}}
 
 
 {{< include "task-tutorial-prereqs.md" >}} {{< version-check >}}
 
+If you are running an older version of Kubernetes, please look at the documentation for the version you are actually running.
 
 
 <!-- steps -->
 
-## CPU Management Policies
+## Configuring CPU management policies
 
 By default, the kubelet uses [CFS quota](https://en.wikipedia.org/wiki/Completely_Fair_Scheduler)
 to enforce pod CPU limits.  When the node runs many CPU-bound pods,
@@ -43,10 +51,19 @@ However, in workloads where CPU cache affinity and scheduling latency
 significantly affect workload performance, the kubelet allows alternative CPU
 management policies to determine some placement preferences on the node.
 
+## Windows Support
+
+{{< feature-state feature_gate_name="WindowsCPUAndMemoryAffinity" >}}
+
+CPU Manager support can be enabled on Windows by using the `WindowsCPUAndMemoryAffinity` feature gate
+and it requires support in the container runtime.
+Once the feature gate is enabled, follow the steps below to configure the [CPU manager policy](#configuration).
+
 ### Configuration
 
 The CPU Manager policy is set with the `--cpu-manager-policy` kubelet
-option. There are two supported policies:
+flag or the `cpuManagerPolicy` field in [KubeletConfiguration](/docs/reference/config-api/kubelet-config.v1beta1/).
+There are two supported policies:
 
 * [`none`](#none-policy): the default policy.
 * [`static`](#static-policy): allows pods with certain resource characteristics to be
@@ -60,32 +77,49 @@ duration as `--node-status-update-frequency`.
 
 The behavior of the static policy can be fine-tuned using the `--cpu-manager-policy-options` flag.
 The flag takes a comma-separated list of `key=value` policy options.
+If you disable the `CPUManagerPolicyOptions`
+[feature gate](/docs/reference/command-line-tools-reference/feature-gates/)
+then you cannot fine-tune CPU manager policies. In that case, the CPU manager
+operates only using its default settings.
 
-### None policy
+In addition to the top-level `CPUManagerPolicyOptions` feature gate, the policy options are split
+into two groups: alpha quality (hidden by default) and beta quality (visible by default).
+The groups are guarded respectively by the `CPUManagerPolicyAlphaOptions`
+and `CPUManagerPolicyBetaOptions` feature gates. Diverging from the Kubernetes standard, these
+feature gates guard groups of options, because it would have been too cumbersome to add a feature
+gate for each individual option.
 
-The `none` policy explicitly enables the existing default CPU
-affinity scheme, providing no affinity beyond what the OS scheduler does
-automatically.  Limits on CPU usage for
-[Guaranteed pods](/docs/tasks/configure-pod-container/quality-service-pod/) and
-[Burstable pods](/docs/tasks/configure-pod-container/quality-service-pod/)
-are enforced using CFS quota.
+### Changing the CPU Manager Policy
 
-### Static policy
+Since the CPU manager policy can only be applied when kubelet spawns new pods, simply changing from
+"none" to "static" won't apply to existing pods. So in order to properly change the CPU manager
+policy on a node, perform the following steps:
 
-The `static` policy allows containers in `Guaranteed` pods with integer CPU
-`requests` access to exclusive CPUs on the node. This exclusivity is enforced
-using the [cpuset cgroup controller](https://www.kernel.org/doc/Documentation/cgroup-v1/cpusets.txt).
+1. [Drain](/docs/tasks/administer-cluster/safely-drain-node) the node.
+2. Stop kubelet.
+3. Remove the old CPU manager state file. The path to this file is
+`/var/lib/kubelet/cpu_manager_state` by default. This clears the state maintained by the
+CPUManager so that the cpu-sets set up by the new policy won’t conflict with it.
+4. Edit the kubelet configuration to change the CPU manager policy to the desired value.
+5. Start kubelet.
+
+Repeat this process for every node that needs its CPU manager policy changed. Skipping this
+process will result in kubelet crashlooping with the following error:
+
+```
+could not restore state from checkpoint: configured policy "static" differs from state checkpoint policy "none", please drain this node and delete the CPU manager checkpoint file "/var/lib/kubelet/cpu_manager_state" before restarting Kubelet
+```
 
 {{< note >}}
-System services such as the container runtime and the kubelet itself can continue to run on these exclusive CPUs.  The exclusivity only extends to other pods.
-{{< /note >}}
-
-{{< note >}}
-CPU Manager doesn't support offlining and onlining of
-CPUs at runtime. Also, if the set of online CPUs changes on the node,
-the node must be drained and CPU manager manually reset by deleting the
+if the set of online CPUs changes on the node, the node must be drained and CPU manager manually reset by deleting the
 state file `cpu_manager_state` in the kubelet root directory.
 {{< /note >}}
+
+#### `none` policy configuration
+
+This policy has no extra configuration items.
+
+#### `static` policy configuration
 
 This policy manages a shared pool of CPUs that initially contains all CPUs in the
 node. The amount of exclusively allocatable CPUs is equal to the total
@@ -108,122 +142,45 @@ the static policy is enabled. This is because zero CPU reservation would allow t
 pool to become empty.
 {{< /note >}}
 
-As `Guaranteed` pods whose containers fit the requirements for being statically
-assigned are scheduled to the node, CPUs are removed from the shared pool and
-placed in the cpuset for the container. CFS quota is not used to bound
-the CPU usage of these containers as their usage is bound by the scheduling domain
-itself. In others words, the number of CPUs in the container cpuset is equal to the integer
-CPU `limit` specified in the pod spec. This static assignment increases CPU
-affinity and decreases context switches due to throttling for the CPU-bound
-workload.
+#### Static policy options {#cpu-policy-static--options}
 
-Consider the containers in the following pod specs:
+You can toggle groups of options on and off based upon their maturity level
+using the following feature gates:
+* `CPUManagerPolicyBetaOptions` default enabled. Disable to hide beta-level options.
+* `CPUManagerPolicyAlphaOptions` default disabled. Enable to show alpha-level options.
+You will still have to enable each option using the `CPUManagerPolicyOptions` kubelet option.
 
-```yaml
-spec:
-  containers:
-  - name: nginx
-    image: nginx
-```
+The following policy options exist for the static `CPUManager` policy:
+* `full-pcpus-only` (beta, visible by default) (1.22 or higher)
+* `distribute-cpus-across-numa` (alpha, hidden by default) (1.23 or higher)
+* `align-by-socket` (alpha, hidden by default) (1.25 or higher)
+* `distribute-cpus-across-cores` (alpha, hidden by default) (1.31 or higher)
+* `strict-cpu-reservation` (alpha, hidden by default) (1.32 or higher)
+* `prefer-align-cpus-by-uncorecache` (alpha, hidden by default) (1.32 or higher)
 
-This pod runs in the `BestEffort` QoS class because no resource `requests` or
-`limits` are specified. It runs in the shared pool.
+The `full-pcpus-only` option can be enabled by adding `full-pcpus-only=true` to
+the CPUManager policy options.
+Likewise, the `distribute-cpus-across-numa` option can be enabled by adding
+`distribute-cpus-across-numa=true` to the CPUManager policy options.
+When both are set, they are "additive" in the sense that CPUs will be
+distributed across NUMA nodes in chunks of full-pcpus rather than individual
+cores.
+The `align-by-socket` policy option can be enabled by adding `align-by-socket=true`
+to the `CPUManager` policy options. It is also additive to the `full-pcpus-only`
+and `distribute-cpus-across-numa` policy options.
 
-```yaml
-spec:
-  containers:
-  - name: nginx
-    image: nginx
-    resources:
-      limits:
-        memory: "200Mi"
-      requests:
-        memory: "100Mi"
-```
+The `distribute-cpus-across-cores` option can be enabled by adding
+`distribute-cpus-across-cores=true` to the `CPUManager` policy options.
+It cannot be used with `full-pcpus-only` or `distribute-cpus-across-numa` policy
+options together at this moment.
 
-This pod runs in the `Burstable` QoS class because resource `requests` do not
-equal `limits` and the `cpu` quantity is not specified. It runs in the shared
-pool.
+The `strict-cpu-reservation` option can be enabled by adding `strict-cpu-reservation=true` to
+the CPUManager policy options followed by removing the `/var/lib/kubelet/cpu_manager_state` file and restart kubelet.
 
-```yaml
-spec:
-  containers:
-  - name: nginx
-    image: nginx
-    resources:
-      limits:
-        memory: "200Mi"
-        cpu: "2"
-      requests:
-        memory: "100Mi"
-        cpu: "1"
-```
+The `prefer-align-cpus-by-uncorecache` option can be enabled by adding the
+`prefer-align-cpus-by-uncorecache` to the `CPUManager` policy options. If 
+incompatible options are used, the kubelet will fail to start with the error 
+explained in the logs.
 
-This pod runs in the `Burstable` QoS class because resource `requests` do not
-equal `limits`. It runs in the shared pool.
-
-```yaml
-spec:
-  containers:
-  - name: nginx
-    image: nginx
-    resources:
-      limits:
-        memory: "200Mi"
-        cpu: "2"
-      requests:
-        memory: "200Mi"
-        cpu: "2"
-```
-
-This pod runs in the `Guaranteed` QoS class because `requests` are equal to `limits`.
-And the container's resource limit for the CPU resource is an integer greater than
-or equal to one. The `nginx` container is granted 2 exclusive CPUs.
-
-
-```yaml
-spec:
-  containers:
-  - name: nginx
-    image: nginx
-    resources:
-      limits:
-        memory: "200Mi"
-        cpu: "1.5"
-      requests:
-        memory: "200Mi"
-        cpu: "1.5"
-```
-
-This pod runs in the `Guaranteed` QoS class because `requests` are equal to `limits`.
-But the container's resource limit for the CPU resource is a fraction. It runs in
-the shared pool.
-
-
-```yaml
-spec:
-  containers:
-  - name: nginx
-    image: nginx
-    resources:
-      limits:
-        memory: "200Mi"
-        cpu: "2"
-```
-
-This pod runs in the `Guaranteed` QoS class because only `limits` are specified
-and `requests` are set equal to `limits` when not explicitly specified. And the
-container's resource limit for the CPU resource is an integer greater than or
-equal to one. The `nginx` container is granted 2 exclusive CPUs.
-
-#### Static policy options
-
-If the `full-pcpus-only` policy option is specified, the static policy will always allocate full physical cores.
-You can enable this option by adding `full-pcups-only=true` to the CPUManager policy options.
-By default, without this option, the static policy allocates CPUs using a topology-aware best-fit allocation.
-On SMT enabled systems, the policy can allocate individual virtual cores, which correspond to hardware threads.
-This can lead to different containers sharing the same physical cores; this behaviour in turn contributes
-to the [noisy neighbours problem](https://en.wikipedia.org/wiki/Cloud_computing_issues#Performance_interference_and_noisy_neighbors).
-With the option enabled, the pod will be admitted by the kubelet only if the CPU request of all its containers
-can be fulfilled by allocating full physical cores.
-If the pod does not pass the admission, it will be put in Failed state with the message `SMTAlignmentError`.
+For mode detail about the behavior of the individual options you can configure, please refer to the
+[Node ResourceManagers](/docs/concepts/policy/node-resource-managers) documentation.

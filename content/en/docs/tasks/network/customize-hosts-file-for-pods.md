@@ -13,8 +13,10 @@ min-kubernetes-server-version: 1.7
 
 Adding entries to a Pod's `/etc/hosts` file provides Pod-level override of hostname resolution when DNS and other options are not applicable. You can add these custom entries with the HostAliases field in PodSpec.
 
-Modification not using HostAliases is not suggested because the file is managed by the kubelet and can be overwritten on during Pod creation/restart.
-
+The Kubernetes project recommends modifying DNS configuration using the `hostAliases` field
+(part of the `.spec` for a Pod), and not by using an init container or other means to edit `/etc/hosts`
+directly.
+Change made in other ways may be overwritten by the kubelet during Pod creation or restart.
 
 <!-- steps -->
 
@@ -69,7 +71,7 @@ For example: to resolve `foo.local`, `bar.local` to `127.0.0.1` and `foo.remote`
 `bar.remote` to `10.1.2.3`, you can configure HostAliases for a Pod under
 `.spec.hostAliases`:
 
-{{< codenew file="service/networking/hostaliases-pod.yaml" >}}
+{{% code_sample file="service/networking/hostaliases-pod.yaml" %}}
 
 You can start a Pod with that configuration by running:
 
@@ -117,10 +119,15 @@ with the additional entries specified at the bottom.
 
 ## Why does the kubelet manage the hosts file? {#why-does-kubelet-manage-the-hosts-file}
 
-The kubelet [manages](https://github.com/kubernetes/kubernetes/issues/14633) the
-`hosts` file for each container of the Pod to prevent Docker from
-[modifying](https://github.com/moby/moby/issues/17190) the file after the
-containers have already been started.
+The kubelet manages the
+`hosts` file for each container of the Pod to prevent the container runtime from
+modifying the file after the containers have already been started.
+Historically, Kubernetes always used Docker Engine as its container runtime, and Docker Engine would
+then modify the `/etc/hosts` file after each container had started.
+
+Current Kubernetes can use a variety of container runtimes; even so, the kubelet manages the
+hosts file within each container so that the outcome is as intended regardless of which
+container runtime you use.
 
 {{< caution >}}
 Avoid making manual changes to the hosts file inside a container.

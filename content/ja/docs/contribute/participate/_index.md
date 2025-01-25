@@ -51,7 +51,7 @@ GitHubには、二つのSIG Docs
 カテゴリがあります:
 
 - `@sig-docs-{language}-owners`は承認者かつリードです。
-- `@sig-docs-{language}-reviewers` はレビュアーです。
+- `@sig-docs-{language}-reviews` はレビュアーです。
 
 それぞれをGitHubコメントの`@name`で参照して、そのグループの全員とコミュニケーションできます。
 
@@ -62,14 +62,14 @@ ProwチームとGitHub teamsが完全に一致せずに重複する場合があ�
 
 Kubernetesプロジェクトは、GitHubのissueとPull Requestに関連する自動化のためにprowと呼ばれる自動化ツールを使用します。 
 [Kubernetes Webサイトリポジトリ](https://github.com/kubernetes/website) 
-は、2つの[prowプラグイン](https://github.com/kubernetes/test-infra/tree/master/prow/plugins)を使用します：
+は、2つの[prowプラグイン](https://github.com/kubernetes-sigs/prow/tree/main/pkg/plugins)を使用します：
 
 - blunderbuss
 - approve
 
 これらの2つのプラグインは`kubernetes.website`のGithubリポジトリのトップレベルにある
-[OWNERS](https://github.com/kubernetes/website/blob/master/OWNERS)ファイルと、
-[OWNERS_ALIASES](https://github.com/kubernetes/website/blob/master/OWNERS_ALIASES)ファイルを使用して、
+[OWNERS](https://github.com/kubernetes/website/blob/main/OWNERS)ファイルと、
+[OWNERS_ALIASES](https://github.com/kubernetes/website/blob/main/OWNERS_ALIASES)ファイルを使用して、
 リポジトリ内でのprowの動作を制御します。
 
 OWNERSファイルには、SIG Docsのレビュー担当者および承認者であるユーザーのリストが含まれています。 
@@ -83,7 +83,7 @@ OWNERSファイルとMarkdownファイルのfront-matterの組み合わせによ
 
 ## マージの仕組み
 
-Pull Requestがコンテンツの公開に使用されるブランチにマージされると、そのコンテンツは http://kubernetes.io に公開されます。
+Pull Requestがコンテンツの公開に使用されるブランチにマージされると、そのコンテンツは https://kubernetes.io に公開されます。
 公開されたコンテンツの品質を高くするために、Pull RequestのマージはSIG Docsの承認者に限定しています。仕組みは次のとおりです。
 
 - Pull Requestに`lgtm`ラベルと`approve`ラベルの両方があり、`hold`ラベルがなく、すべてのテストに合格すると、Pull Requestは自動的にマージされます。

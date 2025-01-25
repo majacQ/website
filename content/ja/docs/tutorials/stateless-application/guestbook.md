@@ -45,7 +45,7 @@ card:
 
 以下のマニフェストファイルは、シングルレプリカのRedisのマスターPodを実行するDeploymentコントローラーを指定しています。
 
-{{< codenew file="application/guestbook/redis-master-deployment.yaml" >}}
+{{% codenew file="application/guestbook/redis-master-deployment.yaml" %}}
 
 1. マニフェストファイルをダウンロードしたディレクトリ内で、ターミナルウィンドウを起動します。
 1. `redis-master-deployment.yaml`ファイルから、RedisのマスターのDeploymentを適用します。
@@ -79,9 +79,9 @@ POD-NAMEの部分を実際のPodの名前に書き換えてください。
 
 ### RedisのマスターのServiceを作成する
 
-ゲストブックアプリケーションは、データを書き込むためにRedisのマスターと通信する必要があります。そのためには、[Service](/docs/concepts/services-networking/service/)を適用して、トラフィックをRedisのマスターのPodへプロキシーしなければなりません。Serviceは、Podにアクセスするためのポリシーを指定します。
+ゲストブックアプリケーションは、データを書き込むためにRedisのマスターと通信する必要があります。そのためには、[Service](/ja/docs/concepts/services-networking/service/)を適用して、トラフィックをRedisのマスターのPodへプロキシしなければなりません。Serviceは、Podにアクセスするためのポリシーを指定します。
 
-{{< codenew file="application/guestbook/redis-master-service.yaml" >}}
+{{% codenew file="application/guestbook/redis-master-service.yaml" %}}
 
 1. 次の`redis-master-service.yaml`から、RedisのマスターのServiceを適用します。
 
@@ -118,7 +118,7 @@ Deploymentはマニフェストファイル内に書かれた設定に基づい�
 
 もし1つもレプリカが実行されていなければ、このDeploymentは2つのレプリカをコンテナクラスター上で起動します。逆に、もしすでに2つ以上のレプリカが実行されていれば、実行中のレプリカが2つになるようにスケールダウンします。
 
-{{< codenew file="application/guestbook/redis-slave-deployment.yaml" >}}
+{{% codenew file="application/guestbook/redis-slave-deployment.yaml" %}}
 
 1. `redis-slave-deployment.yaml`ファイルから、RedisのスレーブのDeploymentを適用します。
 
@@ -145,7 +145,7 @@ Deploymentはマニフェストファイル内に書かれた設定に基づい�
 
 ゲストブックアプリケーションは、データを読み込むためにRedisのスレーブと通信する必要があります。Redisのスレーブが発見できるようにするためには、Serviceをセットアップする必要があります。Serviceは一連のPodに対する透過的なロードバランシングを提供します。
 
-{{< codenew file="application/guestbook/redis-slave-service.yaml" >}}
+{{% codenew file="application/guestbook/redis-slave-service.yaml" %}}
 
 1. 次の`redis-slave-service.yaml`ファイルから、RedisのスレーブのServiceを適用します。
 
@@ -174,7 +174,7 @@ Deploymentはマニフェストファイル内に書かれた設定に基づい�
 
 ### ゲストブックのフロントエンドのDeploymentを作成する
 
-{{< codenew file="application/guestbook/frontend-deployment.yaml" >}}
+{{% codenew file="application/guestbook/frontend-deployment.yaml" %}}
 
 1. `frontend-deployment.yaml`ファイルから、フロントエンドのDeploymentを適用します。
 
@@ -185,7 +185,7 @@ Deploymentはマニフェストファイル内に書かれた設定に基づい�
 1. Podのリストを問い合わせて、3つのフロントエンドのレプリカが実行中になっていることを確認します。
 
       ```shell
-      kubectl get pods -l app.kubernetes.io/name=guestbook -l app.kubernetes.io/component=frontend
+      kubectl get pods -l app=guestbook -l tier=frontend
       ```
 
       結果は次のようになるはずです。
@@ -199,7 +199,7 @@ Deploymentはマニフェストファイル内に書かれた設定に基づい�
 
 ### フロントエンドのServiceを作成する
 
-適用した`redis-slave`および`redis-master` Serviceは、コンテナクラスター内部からのみアクセス可能です。これは、デフォルトのServiceのtypeが[ClusterIP](/docs/concepts/services-networking/service/#publishing-services-service-types)であるためです。`ClusterIP`は、Serviceが指している一連のPodに対して1つのIPアドレスを提供します。このIPアドレスはクラスター内部からのみアクセスできます。
+適用した`redis-slave`および`redis-master` Serviceは、コンテナクラスター内部からのみアクセス可能です。これは、デフォルトのServiceのtypeが[ClusterIP](/ja/docs/concepts/services-networking/service/#publishing-services-service-types)であるためです。`ClusterIP`は、Serviceが指している一連のPodに対して1つのIPアドレスを提供します。このIPアドレスはクラスター内部からのみアクセスできます。
 
 もしゲストの人にゲストブックにアクセスしてほしいのなら、フロントエンドServiceを外部から見えるように設定しなければなりません。そうすれば、クライアントはコンテナクラスターの外部からServiceにリクエストを送れるようになります。Minikubeでは、Serviceを`NodePort`でのみ公開できます。
 
@@ -207,7 +207,7 @@ Deploymentはマニフェストファイル内に書かれた設定に基づい�
 一部のクラウドプロバイダーでは、Google Compute EngineやGoogle Kubernetes Engineなど、外部のロードバランサーをサポートしているものがあります。もしクラウドプロバイダーがロードバランサーをサポートしていて、それを使用したい場合は、`type: NodePort`という行を単に削除またはコメントアウトして、`type: LoadBalancer`のコメントアウトを外せば使用できます。
 {{< /note >}}
 
-{{< codenew file="application/guestbook/frontend-service.yaml" >}}
+{{% codenew file="application/guestbook/frontend-service.yaml" %}}
 
 1. `frontend-service.yaml`ファイルから、フロントエンドのServiceを提供します。
 
@@ -363,8 +363,8 @@ DeploymentとServiceを削除すると、実行中のPodも削除されます。
 
 ## {{% heading "whatsnext" %}}
 
-* ゲストブックアプリケーションに対する[ELKによるロギングとモニタリング](/docs/tutorials/stateless-application/guestbook-logs-metrics-with-elk/)
+* ゲストブックアプリケーションに対する[ELKによるロギングとモニタリング](/ja/docs/tutorials/stateless-application/guestbook-logs-metrics-with-elk/)
 * [Kubernetesの基本](/ja/docs/tutorials/kubernetes-basics/)のインタラクティブチュートリアルを終わらせる
-* Kubernetesを使って、[MySQLとWordpressのためにPersistent Volume](/docs/tutorials/stateful-application/mysql-wordpress-persistent-volume/#visit-your-new-wordpress-blog)を使用したブログを作成する
+* Kubernetesを使って、[MySQLとWordpressのためにPersistent Volume](/ja/docs/tutorials/stateful-application/mysql-wordpress-persistent-volume/#visit-your-new-wordpress-blog)を使用したブログを作成する
 * [サービスとアプリケーションの接続](/ja/docs/concepts/services-networking/connect-applications-service/)についてもっと読む
-* [リソースの管理](/docs/concepts/cluster-administration/manage-deployment/#using-labels-effectively)についてもっと読む
+* [リソースの管理](/ja/docs/concepts/cluster-administration/manage-deployment/#using-labels-effectively)についてもっと読む

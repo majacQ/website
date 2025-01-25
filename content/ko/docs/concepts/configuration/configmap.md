@@ -15,7 +15,6 @@ weight: 20
 사용하여 데이터를 비공개로 유지하자.
 {{< /caution >}}
 
-
 <!-- body -->
 ## 사용 동기
 
@@ -42,7 +41,7 @@ API [오브젝트](/ko/docs/concepts/overview/working-with-objects/kubernetes-ob
 `spec` 이 있는 대부분의 쿠버네티스 오브젝트와 달리, 컨피그맵에는 `data` 및 `binaryData`
 필드가 있다. 이러한 필드는 키-값 쌍을 값으로 허용한다. `data` 필드와
 `binaryData` 는 모두 선택 사항이다. `data` 필드는
-UTF-8 바이트 시퀀스를 포함하도록 설계되었으며 `binaryData` 필드는 바이너리
+UTF-8 문자열을 포함하도록 설계되었으며 `binaryData` 필드는 바이너리
 데이터를 base64로 인코딩된 문자열로 포함하도록 설계되었다.
 
 컨피그맵의 이름은 유효한
@@ -60,6 +59,11 @@ v1.19부터 컨피그맵 정의에 `immutable` 필드를 추가하여
 컨피그맵을 참조하는 파드 `spec` 을 작성하고 컨피그맵의 데이터를
 기반으로 해당 파드의 컨테이너를 구성할 수 있다. 파드와 컨피그맵은
 동일한 {{< glossary_tooltip text="네임스페이스" term_id="namespace" >}}에 있어야 한다.
+
+{{< note >}}
+{{< glossary_tooltip text="스태틱(static) 파드" term_id="static-pod" >}}의 `spec`은 컨피그맵
+또는 다른 API 오브젝트를 참조할 수 없다.
+{{< /note >}}
 
 다음은 단일 값을 가진 키와,
 값이 구성 형식의 일부처럼 보이는 키를 가진 컨피그맵의
@@ -107,46 +111,7 @@ data:
 
 다음은 `game-demo` 의 값을 사용하여 파드를 구성하는 파드 예시이다.
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: configmap-demo-pod
-spec:
-  containers:
-    - name: demo
-      image: alpine
-      command: ["sleep", "3600"]
-      env:
-        # 환경 변수 정의
-        - name: PLAYER_INITIAL_LIVES # 참고로 여기서는 컨피그맵의 키 이름과
-                                     # 대소문자가 다르다.
-          valueFrom:
-            configMapKeyRef:
-              name: game-demo           # 이 값의 컨피그맵.
-              key: player_initial_lives # 가져올 키.
-        - name: UI_PROPERTIES_FILE_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: game-demo
-              key: ui_properties_file_name
-      volumeMounts:
-      - name: config
-        mountPath: "/config"
-        readOnly: true
-  volumes:
-    # 파드 레벨에서 볼륨을 설정한 다음, 해당 파드 내의 컨테이너에 마운트한다.
-    - name: config
-      configMap:
-        # 마운트하려는 컨피그맵의 이름을 제공한다.
-        name: game-demo
-        # 컨피그맵에서 파일로 생성할 키 배열
-        items:
-        - key: "game.properties"
-          path: "game.properties"
-        - key: "user-interface.properties"
-          path: "user-interface.properties"
-```
+{{< codenew file="configmap/configure-pod.yaml" >}}
 
 컨피그맵은 단일 라인 속성(single line property) 값과 멀티 라인의 파일과 비슷한(multi-line file-like) 값을
 구분하지 않는다.
@@ -234,6 +199,10 @@ kubelet은 모든 주기적인 동기화에서 마운트된 컨피그맵이 최�
 
 환경 변수로 사용되는 컨피그맵은 자동으로 업데이트되지 않으며 파드를 다시 시작해야 한다.
 
+{{< note >}}
+컨피그맵을 [subPath](/ko/docs/concepts/storage/volumes/#using-subpath) 볼륨 마운트로 사용하는 컨테이너는 컨피그맵 업데이트를 받지 못할 것이다.
+{{< /note >}}
+
 ## 변경할 수 없는(immutable) 컨피그맵 {#configmap-immutable}
 
 {{< feature-state for_k8s_version="v1.21" state="stable" >}}
@@ -271,5 +240,6 @@ immutable: true
 
 * [시크릿](/ko/docs/concepts/configuration/secret/)에 대해 읽어본다.
 * [컨피그맵을 사용하도록 파드 구성하기](/docs/tasks/configure-pod-container/configure-pod-configmap/)를 읽어본다.
+* [컨피그맵 (또는 어떠한 쿠버네티스 오브젝트) 변경하기](/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/)를 읽어본다.
 * 코드를 구성에서 분리하려는 동기를 이해하려면
   [Twelve-Factor 앱](https://12factor.net/ko/)을 읽어본다.

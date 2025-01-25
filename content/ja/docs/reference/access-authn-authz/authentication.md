@@ -29,7 +29,7 @@ APIリクエストは、通常のユーザーかサービスアカウントに�
 
 ## 認証戦略
 
-Kubernetesは、クライアント証明書、Bearerトークン、認証プロキシー、HTTP Basic認証を使い、認証プラグインを通してAPIリクエストを認証します。APIサーバーにHTTPリクエストが送信されると、プラグインは以下の属性をリクエストに関連付けようとします。
+Kubernetesは、クライアント証明書、Bearerトークン、認証プロキシ、HTTP Basic認証を使い、認証プラグインを通してAPIリクエストを認証します。APIサーバーにHTTPリクエストが送信されると、プラグインは以下の属性をリクエストに関連付けようとします。
 
 * ユーザー名: エンドユーザーを識別する文字列です。一般的にな値は、`kube-admin`や`jane@example.com`です。
 * UID: エンドユーザーを識別する文字列であり、ユーザー名よりも一貫性と一意性を持たせようとするものです。
@@ -48,7 +48,7 @@ Kubernetesは、クライアント証明書、Bearerトークン、認証プロ�
 
 `system:authenticated`グループには、すべての認証済みユーザーのグループのリストが含まれます。
 
-他の認証プロトコル(LDAP、SAML、Kerberos、X509スキームなど)との統合は、[認証プロキシー](#authenticating-proxy)や[認証Webhook](#webhook-token-authentication)を使用して実施できます。
+他の認証プロトコル(LDAP、SAML、Kerberos、X509スキームなど)との統合は、[認証プロキシ](#authenticating-proxy)や[認証Webhook](#webhook-token-authentication)を使用して実施できます。
 
 
 ### X509クライアント証明書
@@ -63,7 +63,7 @@ openssl req -new -key jbeda.pem -out jbeda-csr.pem -subj "/CN=jbeda/O=app1/O=app
 
 これにより、"app1"と"app2"の2つのグループに属するユーザー名"jbeda"の証明書署名要求が作成されます。
 
-クライアント証明書の生成方法については、[証明書の管理](/docs/concepts/cluster-administration/certificates/)を参照してください。
+クライアント証明書の生成方法については、[証明書の管理](/ja/docs/concepts/cluster-administration/certificates/)を参照してください。
 
 ### 静的なトークンファイル
 
@@ -91,7 +91,7 @@ Authorization: Bearer 31ada4fd-adec-460c-809a-9e56ceb75269
 
 {{< feature-state for_k8s_version="v1.18" state="stable" >}}
 
-新しいクラスタの効率的なブートストラップを可能にするために、Kubernetesには*ブートストラップトークン*と呼ばれる動的に管理されたBearerトークンタイプが含まれています。これらのトークンは、`kube-system`名前空間にSecretsとして格納され、動的に管理したり作成したりすることができます。コントローラーマネージャーには、TokenCleanerコントローラーが含まれており、ブートストラップトークンの有効期限が切れると削除します。
+新しいクラスターの効率的なブートストラップを可能にするために、Kubernetesには*ブートストラップトークン*と呼ばれる動的に管理されたBearerトークンタイプが含まれています。これらのトークンは、`kube-system`名前空間にSecretsとして格納され、動的に管理したり作成したりすることができます。コントローラーマネージャーには、TokenCleanerコントローラーが含まれており、ブートストラップトークンの有効期限が切れると削除します。
 
 トークンの形式は`[a-z0-9]{6}.[a-z0-9]{16}`です。最初のコンポーネントはトークンIDであり、第2のコンポーネントはToken Secretです。以下のように、トークンをHTTPヘッダーに指定します。
 
@@ -101,11 +101,11 @@ Authorization: Bearer 781292.db7bc3a58fc5f07e
 
 APIサーバーの`--enable-bootstrap-token-auth`フラグで、Bootstrap Token Authenticatorを有効にする必要があります。TokenCleanerコントローラーを有効にするには、コントローラーマネージャーの`--controllers`フラグを使います。`--controllers=*,tokencleaner`のようにして行います。クラスターをブートストラップするために`kubeadm`を使用している場合は、`kubeadm`がこれを代行してくれます。
 
-認証機能は`system:bootstrap:<Token ID>`という名前で認証します。これは`system:bootstrappers`グループに含まれます。名前とグループは意図的に制限されており、ユーザーがブートストラップ後にこれらのトークンを使わないようにしています。ユーザー名とグループは、クラスタのブートストラップをサポートする適切な認可ポリシーを作成するために使用され、`kubeadm`によって使用されます。
+認証機能は`system:bootstrap:<Token ID>`という名前で認証します。これは`system:bootstrappers`グループに含まれます。名前とグループは意図的に制限されており、ユーザーがブートストラップ後にこれらのトークンを使わないようにしています。ユーザー名とグループは、クラスターのブートストラップをサポートする適切な認可ポリシーを作成するために使用され、`kubeadm`によって使用されます。
 
 ブートストラップトークンの認証機能やコントローラーについての詳細な説明、`kubeadm`でこれらのトークンを管理する方法については、[ブートストラップトークン](/docs/reference/access-authn-authz/bootstrap-tokens/)を参照してください。
 
-### サービスアカウントトークン
+### サービスアカウントトークン {#service-account-token}
 
 サービスアカウントは、自動的に有効化される認証機能で、署名されたBearerトークンを使ってリクエストを検証します。このプラグインは、オプションとして2つのフラグを取ります。
 
@@ -184,7 +184,7 @@ type: kubernetes.io/service-account-token
 Secretは常にbase64でエンコードされるため、これらの値もbase64でエンコードされています。
 {{< /note >}}
 
-署名されたJWTは、与えられたサービスアカウントとして認証するためのBearerトークンとして使用できます。トークンをリクエストに含める方法については、[リクエストにBearerトークンを含める](#putting-a-bearer-token-in-a-request)を参照してください。通常、これらのSecretはAPIサーバーへのクラスタ内アクセス用にPodにマウントされますが、クラスター外からも使用することができます。
+署名されたJWTは、与えられたサービスアカウントとして認証するためのBearerトークンとして使用できます。トークンをリクエストに含める方法については、[リクエストにBearerトークンを含める](#putting-a-bearer-token-in-a-request)を参照してください。通常、これらのSecretはAPIサーバーへのクラスター内アクセス用にPodにマウントされますが、クラスター外からも使用することができます。
 
 サービスアカウントは、ユーザー名`system:serviceaccount:(NAMESPACE):(SERVICEACCOUNT)`で認証され、グループ`system:serviceaccounts`と`system:serviceaccounts:(NAMESPACE)`に割り当てられます。
 
@@ -211,7 +211,7 @@ Secretは常にbase64でエンコードされるため、これらの値もbase6
 
 1. Kubernetesには、認証プロセスを起動するための"Webインターフェース"がありません。クレデンシャルを収集するためのブラウザやインターフェースがないため、まずIDプロバイダに認証を行う必要があります。
 2. `id_token`は、取り消すことができません。これは証明書のようなもので、有効期限が短い(数分のみ)必要があるので、数分ごとに新しいトークンを取得しなければならないのは非常に面倒です。
-3. Kubernetesダッシュボードへの認証において、`kubectl proxy`コマンドや`id_token`を注入するリバースプロキシーを使う以外に、簡単な方法はありません。
+3. Kubernetesダッシュボードへの認証において、`kubectl proxy`コマンドや`id_token`を注入するリバースプロキシを使う以外に、簡単な方法はありません。
 
 
 #### APIサーバーの設定
@@ -314,7 +314,7 @@ Webhook認証は、Bearerトークンを検証するためのフックです。
 * `--authentication-token-webhook-config-file`: リモートのWebhookサービスへのアクセス方法を記述した設定ファイルです
 * `--authentication-token-webhook-cache-ttl`: 認証をキャッシュする時間を決定します。デフォルトは2分です
 
-設定ファイルは、[kubeconfig](/docs/concepts/configuration/organize-cluster-access-kubeconfig/)のファイル形式を使用します。
+設定ファイルは、[kubeconfig](/ja/docs/concepts/configuration/organize-cluster-access-kubeconfig/)のファイル形式を使用します。
 ファイル内で、`clusters`はリモートサービスを、`users`はAPIサーバーのWebhookを指します。例えば、以下のようになります。
 
 ```yaml
@@ -347,7 +347,7 @@ contexts:
 
 クライアントが[上記](#putting-a-bearer-token-in-a-request)のようにBearerトークンを使用してAPIサーバーとの認証を試みた場合、認証Webhookはトークンを含むJSONでシリアライズされた`authentication.k8s.io/v1beta1` `TokenReview`オブジェクトをリモートサービスにPOSTします。Kubernetesはそのようなヘッダーが不足しているリクエストを作成しようとはしません。
 
-Webhook APIオブジェクトは、他のKubernetes APIオブジェクトと同じように、[Versioning Compatibility Rule](/docs/concepts/overview/kubernetes-api/)に従うことに注意してください。実装者は、ベータオブジェクトで保証される互換性が緩いことに注意し、正しいデシリアライゼーションが使用されるようにリクエストの"apiVersion"フィールドを確認する必要があります。さらにAPIサーバーは、API拡張グループ`authentication.k8s.io/v1beta1`を有効にしなければなりません(`--runtime config=authentication.k8s.io/v1beta1=true`)。
+Webhook APIオブジェクトは、他のKubernetes APIオブジェクトと同じように、[Versioning Compatibility Rule](/ja/docs/concepts/overview/kubernetes-api/)に従うことに注意してください。実装者は、ベータオブジェクトで保証される互換性が緩いことに注意し、正しいデシリアライゼーションが使用されるようにリクエストの"apiVersion"フィールドを確認する必要があります。さらにAPIサーバーは、API拡張グループ`authentication.k8s.io/v1beta1`を有効にしなければなりません(`--runtime config=authentication.k8s.io/v1beta1=true`)。
 
 POSTボディは、以下の形式になります。
 
@@ -402,10 +402,10 @@ POSTボディは、以下の形式になります。
 HTTPステータスコードは、追加のエラーコンテキストを提供するために使うことができます。
 
 
-### 認証プロキシー {#authenticating-proxy}
+### 認証プロキシ {#authenticating-proxy}
 
 APIサーバーは、`X-Remote-User`のようにリクエストヘッダの値からユーザーを識別するように設定することができます。
-これは、リクエストヘッダの値を設定する認証プロキシーと組み合わせて使用するために設計です。
+これは、リクエストヘッダの値を設定する認証プロキシと組み合わせて使用するために設計です。
 
 * `--requestheader-username-headers`: 必須であり、大文字小文字を区別しません。ユーザーのIDをチェックするためのヘッダー名を順番に指定します。値を含む最初のヘッダーが、ユーザー名として使われます。
 * `--requestheader-group-headers`: バージョン1.6以降で任意であり、大文字小文字を区別しません。"X-Remote-Group"を推奨します。ユーザーのグループをチェックするためのヘッダー名を順番に指定します。指定されたヘッダーの全ての値が、グループ名として使われます。
@@ -450,7 +450,7 @@ extra:
   - profile
 ```
 
-ヘッダーのスプーフィングを防ぐため、認証プロキシーはリクエストヘッダーがチェックされる前に、指定された認証局に対する検証のために有効なクライアント証明書をAPIサーバーへ提示する必要があります。
+ヘッダーのスプーフィングを防ぐため、認証プロキシはリクエストヘッダーがチェックされる前に、指定された認証局に対する検証のために有効なクライアント証明書をAPIサーバーへ提示する必要があります。
 
 
 * `--requestheader-client-ca-file`: 必須です。PEMエンコードされた証明書バンドルです。有効なクライアント証明書を提示し、リクエストヘッダーでユーザー名がチェックされる前に、指定されたファイル内の認証局に対して検証する必要があります。
@@ -600,7 +600,7 @@ rules:
 
 ### 設定
 
-クレデンシャルプラグインの設定は、userフィールドの一部として[kubectlの設定ファイル](/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)で行います。
+クレデンシャルプラグインの設定は、userフィールドの一部として[kubectlの設定ファイル](/ja/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)で行います。
 
 ```yaml
 apiVersion: v1
@@ -642,7 +642,7 @@ contexts:
 current-context: my-cluster
 ```
 
-相対的なコマンドパスは、設定ファイルのディレクトリーからの相対的なものとして解釈されます。KUBECONFIGが`/home/jane/kubeconfig`に設定されていて、execコマンドが`./bin/example-client-go-exec-plugin`の場合、バイナリー`/home/jane/bin/example-client-go-exec-plugin`が実行されます。
+相対的なコマンドパスは、設定ファイルのディレクトリーからの相対的なものとして解釈されます。KUBECONFIGが`/home/jane/kubeconfig`に設定されていて、execコマンドが`./bin/example-client-go-exec-plugin`の場合、バイナリ`/home/jane/bin/example-client-go-exec-plugin`が実行されます。
 
 ```yaml
 - name: my-user
