@@ -2,12 +2,6 @@
 title: Hello Minikube
 content_type: tutorial
 weight: 5
-menu:
-  main:
-    title: "Get Started"
-    weight: 10
-    post: >
-      <p>작업할 준비가 되었나요? 샘플 애플리케이션을 실행하는 간단한 쿠버네티스 클러스터를 구축합니다.</p>
 card:
   name: tutorials
   weight: 10
@@ -23,8 +17,6 @@ Katacode는 무료로 브라우저에서 쿠버네티스 환경을 제공한다.
 로컬에서 Minikube를 설치했다면 이 튜토리얼도 따라 할 수 있다.
 설치 안내는 [minikube 시작](https://minikube.sigs.k8s.io/docs/start/)을 참고한다.
 {{< /note >}}
-
-
 
 ## {{% heading "objectives" %}}
 
@@ -62,16 +54,22 @@ Katacode는 무료로 브라우저에서 쿠버네티스 환경을 제공한다.
 4. Katacoda 환경에서는: 30000 을 입력하고 **Display Port** 를 클릭.
 
 {{< note >}}
-`minikube dashboard` 명령을 내리면 대시보드 애드온과 프록시가 활성화되고 해당 프록시로 접속하는 기본 웹 브라우저 창이 열린다. 대시보드에서 디플로이먼트나 서비스와 같은 쿠버네티스 자원을 생성할 수 있다.
+`minikube dashboard` 명령을 내리면 대시보드 애드온과 프록시가 활성화되고 해당 프록시로 접속하는 기본 웹 브라우저 창이 열린다.
+대시보드에서 디플로이먼트나 서비스와 같은 쿠버네티스 자원을 생성할 수 있다.
 
 root 환경에서 명령어를 실행하고 있다면, [URL을 이용하여 대시보드 접속하기](#open-dashboard-with-url)를 참고한다.
 
+기본적으로 대시보드는 쿠버네티스 내부 가상 네트워크 안에서만 접근할 수 있다.
+`dashboard` 명령은 쿠버네티스 가상 네트워크 외부에서 대시보드에 접근할 수 있도록 임시 프록시를 만든다.
+
 `Ctrl+C` 를 눌러 프록시를 종료할 수 있다. 대시보드는 종료되지 않고 실행 상태로 남아 있다.
+명령이 종료된 후 대시보드는 쿠버네티스 클러스터에서 계속 실행된다.
+`dashboard` 명령을 다시 실행하여 대시보드에 접근하기 위한 다른 프록시를 생성할 수 있다.
 {{< /note >}}
 
 ## URL을 이용하여 대시보드 접속하기 {#open-dashboard-with-url}
 
-자동으로 웹 브라우저가 열리는 것을 원치 않는다면, 다음과 같은 명령어를 실행하여 대시보드 접속 URL을 출력할 수 있다:
+자동으로 웹 브라우저가 열리는 것을 원치 않는다면, `--url` 플래그와 함께 다음과 같은 명령어를 실행하여 대시보드 접속 URL을 출력할 수 있다.
 
 ```shell
 minikube dashboard --url
@@ -90,7 +88,7 @@ minikube dashboard --url
 파드는 제공된 Docker 이미지를 기반으로 한 컨테이너를 실행한다.
 
     ```shell
-    kubectl create deployment hello-node --image=k8s.gcr.io/echoserver:1.4
+    kubectl create deployment hello-node --image=registry.k8s.io/e2e-test-images/agnhost:2.39 -- /agnhost netexec --http-port=8080
     ```
 
 2. 디플로이먼트 보기
@@ -132,7 +130,7 @@ minikube dashboard --url
     ```
 
 {{< note >}}
-`kubectl` 명령어에 관해 자세히 알기 원하면 [kubectl 개요](/ko/docs/reference/kubectl/overview/)을 살펴보자.
+`kubectl` 명령어에 관해 자세히 알기 원하면 [kubectl 개요](/ko/docs/reference/kubectl/)을 살펴보자.
 {{< /note >}}
 
 ## 서비스 만들기
@@ -151,7 +149,7 @@ minikube dashboard --url
     `--type=LoadBalancer`플래그는 클러스터 밖의 서비스로 노출하기
     원한다는 뜻이다.
 
-    `k8s.gcr.io/echoserver` 이미지 내의 애플리케이션 코드는 TCP 포트 8080에서만 수신한다. `kubectl expose`를
+    `registry.k8s.io/echoserver` 이미지 내의 애플리케이션 코드는 TCP 포트 8080에서만 수신한다. `kubectl expose`를
     사용하여 다른 포트를 노출한 경우, 클라이언트는 다른 포트에 연결할 수 없다.
 
 2. 생성한 서비스 살펴보기
@@ -297,5 +295,6 @@ minikube delete
 
 
 * [디플로이먼트 오브젝트](/ko/docs/concepts/workloads/controllers/deployment/)에 대해서 더 배워 본다.
-* [애플리케이션 배포](/docs/tasks/run-application/run-stateless-application-deployment/)에 대해서 더 배워 본다.
+* [애플리케이션 배포](/ko/docs/tasks/run-application/run-stateless-application-deployment/)에 대해서 더 배워 본다.
 * [서비스 오브젝트](/ko/docs/concepts/services-networking/service/)에 대해서 더 배워 본다.
+

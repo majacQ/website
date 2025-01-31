@@ -3,9 +3,10 @@ layout: blog
 title: "Kubernetes 1.22: Server Side Apply moves to GA"
 date: 2021-08-06
 slug: server-side-apply-ga
+author: >
+  Jeffrey Ying (Google)
+  Joe Betz (Google) 
 ---
-
-**Authors:** Jeffrey Ying, Google & Joe Betz, Google
 
 Server-side Apply (SSA) has been promoted to GA in the Kubernetes v1.22 release. The GA milestone means you can depend on the feature and its API, without fear of future backwards-incompatible changes. GA features are protected by the Kubernetes [deprecation policy](/docs/reference/using-api/deprecation-policy/).
 
@@ -121,7 +122,7 @@ deploymentApplyConfig.Spec.Template.Spec.WithContainers(corev1ac.Container().
 )
 
 // apply
-applied, err := deploymentClient.Apply(ctx, extractedDeployment, metav1.ApplyOptions{FieldManager: fieldMgr})
+applied, err := deploymentClient.Apply(ctx, deploymentApplyConfig, metav1.ApplyOptions{FieldManager: fieldMgr})
 ```
 
 For developers using Custom Resource Definitions (CRDs), the Kubebuilder apply support will provide the same capabilities. Documentation will be included in the Kubebuilder book when available.

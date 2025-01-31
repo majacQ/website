@@ -5,6 +5,10 @@ abstract: Programy szkoleniowe, certyfikacja i partnerzy.
 layout: basic
 cid: training
 class: training
+body_class: training
+menu:
+  main:
+    weight: 30
 ---
 
 <section class="call-to-action">
@@ -13,6 +17,9 @@ class: training
       <div class="cta-text">
         <h2>Kariera <em>Cloud Native</em></h2>
         <p>Kubernetes stanowi serce całego ruchu <em>cloud native</em>. Korzystając ze szkoleń i certyfikacji oferowanych przez Linux Foundation i naszych partnerów zainwestujesz w swoją karierę, nauczysz się korzystać z Kubernetesa i sprawisz, że Twoje projekty <em>cloud native</em> osiągną sukces.</p>
+      </div>
+      <div class="logo-certification cta-image" id="logo-kcnf">
+        <img src="/images/training/kubernetes-kcnf-white.svg" />
       </div>
       <div class="logo-certification cta-image" id="logo-cka">
         <img src="/images/training/kubernetes-cka-white.svg"/>
@@ -83,6 +90,15 @@ class: training
     <div class="col-container">
       <div class="col-nav">
           <h5>
+            <b>Kubernetes and Cloud Native Associate (KCNA)</b>
+          </h5>
+          <p>Egzamin Kubernetes and Cloud Native Associate (KCNA) potwierdza podstawowe umiejętności korzystania z Kubernetesa i ogólnie - ze środowiska <em>cloud native</em>.</p>
+          <p>Posiadacz KCNA rozumie pojęcia dotyczące całego ekosystemu <em>cloud native</em>, ze szczególnym uwzględnieniem Kubernetesa.</p>
+          <br>
+          <a href="https://training.linuxfoundation.org/certification/kubernetes-cloud-native-associate/" target="_blank" class="button">Przejdź do certyfikacji</a>
+      </div>
+      <div class="col-nav">
+          <h5>
             <b>Certified Kubernetes Application Developer (CKAD)</b>
           </h5>
           <p>Egzamin na certyfikowanego dewelopera aplikacji (Certified Kubernetes Application Developer) potwierdza umiejętności projektowania, budowania, konfigurowania i udostępniania "rdzennych" aplikacji dla Kubernetesa.</p>
@@ -120,6 +136,6 @@ class: training
     </center>
   </div>
   <div class="main-section landscape-section">
-    {{< cncf-landscape helpers=false category="kubernetes-training-partner" >}}
+    {{< cncf-landscape helpers=false category="special--kubernetes-training-partner" >}}
   </div>
 </div>

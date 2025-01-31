@@ -15,7 +15,7 @@ behind one command, with support for both planning an upgrade and actually perfo
 
 ## kubeadm upgrade guidance
 
-The steps for performing a upgrade using kubeadm are outlined in [this document](/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/).
+The steps for performing an upgrade using kubeadm are outlined in [this document](/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/).
 For older versions of kubeadm, please refer to older documentation sets of the Kubernetes website.
 
 You can use `kubeadm upgrade diff` to see the changes that would be applied to static pod manifests.
@@ -33,16 +33,16 @@ reports of unexpected results.
 {{</ note >}}
 
 ## kubeadm upgrade plan {#cmd-upgrade-plan}
-{{< include "generated/kubeadm_upgrade_plan.md" >}}
+{{< include "generated/kubeadm_upgrade/kubeadm_upgrade_plan.md" >}}
 
 ## kubeadm upgrade apply  {#cmd-upgrade-apply}
-{{< include "generated/kubeadm_upgrade_apply.md" >}}
+{{< include "generated/kubeadm_upgrade/kubeadm_upgrade_apply.md" >}}
 
 ## kubeadm upgrade diff {#cmd-upgrade-diff}
-{{< include "generated/kubeadm_upgrade_diff.md" >}}
+{{< include "generated/kubeadm_upgrade/kubeadm_upgrade_diff.md" >}}
 
 ## kubeadm upgrade node {#cmd-upgrade-node}
-{{< include "generated/kubeadm_upgrade_node.md" >}}
+{{< include "generated/kubeadm_upgrade/kubeadm_upgrade_node.md" >}}
 
 
 ## {{% heading "whatsnext" %}}

@@ -101,7 +101,7 @@ y gestión de despliegue.
 Otros controladores como los [StatefulSet](/es/docs/concepts/workloads/controllers/statefulset/)
 pueden tambien proporcionar soporte para Pods que necesiten persistir el estado.
 
-El uso de API colectivas como la principal primitiva de cara al usuario es relativamente común entre los sistemas de planificación de clúster, incluyendo [Borg](https://research.google.com/pubs/pub43438.html), [Marathon](https://mesosphere.github.io/marathon/docs/rest-api.html), [Aurora](http://aurora.apache.org/documentation/latest/reference/configuration/#job-schema), y [Tupperware](http://www.slideshare.net/Docker/aravindnarayanan-facebook140613153626phpapp02-37588997).
+El uso de API colectivas como la principal primitiva de cara al usuario es relativamente común entre los sistemas de planificación de clúster, incluyendo [Borg](https://research.google/pubs/large-scale-cluster-management-at-google-with-borg/), [Marathon](https://github.com/d2iq-archive/marathon), [Aurora](http://aurora.apache.org/documentation/latest/reference/configuration/#job-schema), y [Tupperware](http://www.slideshare.net/Docker/aravindnarayanan-facebook140613153626phpapp02-37588997).
 
 El Pod se expone como primitiva para facilitar:
 
@@ -129,7 +129,7 @@ Un ejemplo del ciclo de terminación de un Pod:
 1. El Kubelet terminará de eliminar el Pod en el servidor API configurando el período de gracia 0 (eliminación inmediata). El Pod desaparece de la API y ya no es visible desde el cliente.
 
 Por defecto, todas las eliminaciones se realizan correctamente en 30 segundos. El comando `kubectl delete` admite la opción` --grace-period = <seconds> `que permite al usuario anular el valor predeterminado y especificar su propio valor. El valor `0` [forzar eliminación](/es/docs/concepts/workloads/pods/pod/#forzar-destrucción-de-pods) del Pod.
-Debe especificar un indicador adicional `--force` junto con` --grace-period = 0` para realizar eliminaciones forzadas.
+Debe especificar un indicador adicional `--force` junto con `--grace-period = 0` para realizar eliminaciones forzadas.
 
 ### Forzar destrucción de Pods
 

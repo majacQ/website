@@ -3,18 +3,18 @@
   <head>
     {{ partial "head.html" . }}
   </head>
-  <body class="td-search {{- if ne .Params.cid "" -}}{{- printf " cid-%s" (lower .Params.cid) -}}{{- end -}}">
+  <body class="td-search {{- if ne (lower .Params.cid) "" -}}{{- printf " cid-%s" (lower .Params.cid) -}}{{- end -}}">
     <header>
       {{ partial "navbar.html" . }}
-      <div class="header-filler"></div>
-    </header>
-    {{ block "announcement" . }}
-      {{ if .IsHome }}
-        {{ partial "frontpage-announcement.html" . }}
-      {{ else }}
+      {{ block "announcement" . }}
         {{ partial "announcement.html" . }}
       {{ end }}
-    {{ end }}
+      {{ block "hero" . }}
+        <section class="header-hero filler">
+        </section>
+         {{ block "hero-more" . }}{{ end }}
+      {{ end }}
+    </header>
     <div class="td-outer">
       <main role="main" class="td-main">
         <section class="row td-search-result">
@@ -24,7 +24,6 @@
             </form>
           </div>
           <div class="col-12 col-md-8 offset-md-2">
-              <h2 class="ml-4">{{ .Title }}</h2>
           {{ if .Site.Params.gcs_engine_id }}
           <script>
             (function() {
@@ -40,16 +39,16 @@
           <gcse:searchresults-only></gcse:searchresults-only>
           {{ else if .Site.Params.k8s_search }}
           <script src="{{ "js/search.js" | relURL }}"></script>
+          <script src="/pagefind/pagefind-ui.js"></script>
           <gcse:searchresults-only linktarget="_parent">
-            <div id="bing-results-container">{{ T "layouts_docs_search_fetching" }}</div>
-            <div id="bing-pagination-container"></div>
+            <div id="search" style="display:none"></div>
           </gcse:searchresults-only>
           {{ end }}
           </div>
         </section>
       </main>
-    {{ partial "footer.html" . }}
     </div>
+    {{ partial "footer.html" . }}
     {{ partialCached "scripts.html" . }}
   </body>
 </html>

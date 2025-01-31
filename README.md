@@ -5,20 +5,23 @@
 This repository contains the assets required to build the [Kubernetes website and documentation](https://kubernetes.io/). We're glad that you want to contribute!
 
 - [Contributing to the docs](#contributing-to-the-docs)
-- [Localization ReadMes](#localization-readmemds)
+- [Localization READMEs](#localization-readmes)
 
 ## Using this repository
 
-You can run the website locally using Hugo (Extended version), or you can run it in a container runtime. We strongly recommend using the container runtime, as it gives deployment consistency with the live website.
+You can run the website locally using [Hugo (Extended version)](https://gohugo.io/), or you can run it in a container runtime. We strongly recommend using the container runtime, as it gives deployment consistency with the live website.
 
 ## Prerequisites
 
 To use this repository, you need the following installed locally:
 
 - [npm](https://www.npmjs.com/)
-- [Go](https://golang.org/)
+- [Go](https://go.dev/)
 - [Hugo (Extended version)](https://gohugo.io/)
 - A container runtime, like [Docker](https://www.docker.com/).
+
+> [!NOTE]
+Make sure to install the Hugo extended version specified by the `HUGO_VERSION` environment variable in the [`netlify.toml`](netlify.toml#L11) file.
 
 Before you start, install the dependencies. Clone the repository and navigate to the directory:
 
@@ -27,47 +30,62 @@ git clone https://github.com/kubernetes/website.git
 cd website
 ```
 
-The Kubernetes website uses the [Docsy Hugo theme](https://github.com/google/docsy#readme). Even if you plan to run the website in a container, we strongly recommend pulling in the submodule and other development dependencies by running the following:
+The Kubernetes website uses git submodules. Even if you plan to run the website in a container, we strongly recommend pulling in the submodule and other development dependencies by running the following:
+
+### Windows
+
+```powershell
+# fetch submodule dependencies
+git submodule update --init --recursive --depth 1
+```
+
+### Linux / other Unix
 
 ```bash
-# pull in the Docsy submodule
-git submodule update --init --recursive --depth 1
+# fetch submodule dependencies
+make module-init
 ```
 
 ## Running the website using a container
 
-To build the site in a container, run the following to build the container image and run it:
+To build the site in a container, run the following:
 
 ```bash
-make container-image
+# You can set $CONTAINER_ENGINE to the name of any Docker-like container tool
 make container-serve
 ```
 
-If you see errors, it probably means that the hugo container did not have enough computing resources available. To solve it, increase the amount of allowed CPU and memory usage for Docker on your machine ([MacOSX](https://docs.docker.com/docker-for-mac/#resources) and [Windows](https://docs.docker.com/docker-for-windows/#resources)).
+If you see errors, it probably means that the hugo container did not have enough computing resources available. To solve it, increase the amount of allowed CPU and memory usage for Docker on your machine ([MacOS](https://docs.docker.com/desktop/settings/mac/) and [Windows](https://docs.docker.com/desktop/settings/windows/)).
 
 Open up your browser to <http://localhost:1313> to view the website. As you make changes to the source files, Hugo updates the website and forces a browser refresh.
 
 ## Running the website locally using Hugo
 
-Make sure to install the Hugo extended version specified by the `HUGO_VERSION` environment variable in the [`netlify.toml`](netlify.toml#L10) file.
+To install dependencies, deploy and test the site locally, run:
 
-To build and test the site locally, run:
+- For macOS and Linux
 
-```bash
-# install dependencies
-npm ci
-make serve
-```
+  ```bash
+  npm ci
+  make serve
+  ```
+
+- For Windows (PowerShell)
+
+  ```powershell
+  npm ci
+  hugo.exe server --buildFuture --environment development
+  ```
 
 This will start the local Hugo server on port 1313. Open up your browser to <http://localhost:1313> to view the website. As you make changes to the source files, Hugo updates the website and forces a browser refresh.
 
 ## Building the API reference pages
 
-The API reference pages located in `content/en/docs/reference/kubernetes-api` are built from the Swagger specification, using <https://github.com/kubernetes-sigs/reference-docs/tree/master/gen-resourcesdocs>.
+The API reference pages located in `content/en/docs/reference/kubernetes-api` are built from the Swagger specification, also known as OpenAPI specification, using <https://github.com/kubernetes-sigs/reference-docs/tree/master/gen-resourcesdocs>.
 
-To update the reference pages for a new Kubernetes release (replace v1.20 in the following examples with the release to update to):
+To update the reference pages for a new Kubernetes release follow these steps:
 
-1. Pull the `kubernetes-resources-reference` submodule:
+1. Pull in the `api-ref-generator` submodule:
 
    ```bash
    git submodule update --init --recursive --depth 1
@@ -75,9 +93,9 @@ To update the reference pages for a new Kubernetes release (replace v1.20 in the
 
 2. Update the Swagger specification:
 
-```
-curl 'https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json' > api-ref-assets/api/swagger.json
-```
+   ```bash
+   curl 'https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json' > api-ref-assets/api/swagger.json
+   ```
 
 3. In `api-ref-assets/config/`, adapt the files `toc.yaml` and `fields.yaml` to reflect the changes of the new release.
 
@@ -87,10 +105,9 @@ curl 'https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi
    make api-reference
    ```
 
-   You can test the results locally by making and serving the site from a container image:
+   You can test the results locally by building and serving the site from a container:
 
    ```bash
-   make container-image
    make container-serve
    ```
 
@@ -146,7 +163,8 @@ Learn more about SIG Docs Kubernetes community and meetings on the [community pa
 
 You can also reach the maintainers of this project at:
 
-- [Slack](https://kubernetes.slack.com/messages/sig-docs) [Get an invite for this Slack](https://slack.k8s.io/)
+- [Slack](https://kubernetes.slack.com/messages/sig-docs)
+  - [Get an invite for this Slack](https://slack.k8s.io/)
 - [Mailing List](https://groups.google.com/forum/#!forum/kubernetes-sig-docs)
 
 ## Contributing to the docs
@@ -165,22 +183,32 @@ For more information about contributing to the Kubernetes documentation, see:
 - [Page Content Types](https://kubernetes.io/docs/contribute/style/page-content-types/)
 - [Documentation Style Guide](https://kubernetes.io/docs/contribute/style/style-guide/)
 - [Localizing Kubernetes Documentation](https://kubernetes.io/docs/contribute/localization/)
+- [Introduction to Kubernetes Docs](https://www.youtube.com/watch?v=pprMgmNzDcw)
 
-## Localization `README.md`'s
+### New contributor ambassadors
+
+If you need help at any point when contributing, the [New Contributor Ambassadors](https://kubernetes.io/docs/contribute/advanced/#serve-as-a-new-contributor-ambassador) are a good point of contact. These are SIG Docs approvers whose responsibilities include mentoring new contributors and helping them through their first few pull requests. The best place to contact the New Contributors Ambassadors would be on the [Kubernetes Slack](https://slack.k8s.io/). Current New Contributors Ambassadors for SIG Docs:
+
+| Name                       | Slack                      | GitHub                     |
+| -------------------------- | -------------------------- | -------------------------- |
+| Sreeram Venkitesh          | @sreeram.venkitesh         | @sreeram-venkitesh         |
+
+## Localization READMEs
 
 | Language                   | Language                   |
 | -------------------------- | -------------------------- |
-| [Chinese](README-zh.md)    | [Korean](README-ko.md)     |
-| [French](README-fr.md)     | [Polish](README-pl.md)     |
-| [German](README-de.md)     | [Portuguese](README-pt.md) |
-| [Hindi](README-hi.md)      | [Russian](README-ru.md)    |
-| [Indonesian](README-id.md) | [Spanish](README-es.md)    |
-| [Italian](README-it.md)    | [Ukrainian](README-uk.md)  |
-| [Japanese](README-ja.md)   | [Vietnamese](README-vi.md) |
+| [Bengali](./content/bn/README.md)    | [Korean](./content/ko/README.md)    |
+| [Chinese](./content/zh-cn/README.md)    | [Polish](./content/pl/README.md)    |
+| [French](./content/fr/README.md)     | [Portuguese](./content/pt-br/README.md)    |
+| [German](./content/de/README.md)     | [Russian](./content/ru/README.md)    |
+| [Hindi](./content/hi/README.md)      | [Spanish](./content/es/README.md)    |
+| [Indonesian](./content/id/README.md) | [Ukrainian](./content/uk/README.md) |
+| [Italian](./content/it/README.md)    | [Vietnamese](./content/vi/README.md) |
+| [Japanese](./content/ja/README.md)   | |
 
 ## Code of conduct
 
-Participation in the Kubernetes community is governed by the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md).
+Participation in the Kubernetes community is governed by the [CNCF Code of Conduct](https://github.com/cncf/foundation/blob/main/code-of-conduct.md).
 
 ## Thank you
 

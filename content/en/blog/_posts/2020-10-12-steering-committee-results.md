@@ -3,9 +3,9 @@ layout: blog
 title: "Announcing the 2020 Steering Committee Election Results"
 date: 2020-10-12
 slug: steering-committee-results-2020
+author: >
+   Kaslin Fields
 ---
-
-**Author**: Kaslin Fields
 
 The [2020 Steering Committee Election](https://github.com/kubernetes/community/tree/master/events/elections/2020) is now complete. In 2019, the committee arrived at its final allocation of 7 seats, 3 of which were up for election in 2020. Incoming committee members serve a term of 2 years, and all members are elected by the Kubernetes Community.
 
@@ -29,7 +29,7 @@ They join continuing members Christoph Blecker ([@cblecker](https://github.com/c
   * Josh Berkus ([@jberkus](https://github.com/jberkus)), Red Hat
 * Thanks to the Emeritus Steering Committee Members. Your prior service is appreciated by the community:
   * Aaron Crickenberger ([@spiffxp](https://github.com/spiffxp)), Google
-  * and Lachlan Evenson([@lachie8e)](https://github.com/lachie8e)), Microsoft
+  * and Lachlan Evenson([@lachie83)](https://github.com/lachie83)), Microsoft
 * And thank you to all the candidates who came forward to run for election. As [Jorge Castro put it](https://twitter.com/castrojo/status/1315718627639820288?s=20): we are spoiled with capable, kind, and selfless volunteers who put the needs of the project first.
 
 ## Get Involved with the Steering Committee

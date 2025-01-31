@@ -1,6 +1,6 @@
 ---
-
-
+# reviewers:
+# - sig-cluster-lifecycle
 title: kubeadm API로 컴포넌트 사용자 정의하기
 content_type: concept
 weight: 40
@@ -9,12 +9,12 @@ weight: 40
 <!-- overview -->
 
 이 페이지는 kubeadm이 배포하는 컴포넌트(component)들을 사용자 정의하는 방법을 다룬다. 컨트롤 플레인 컴포넌트에
-대해서는 `ClusterConfiguration` 구조에서 플래그를 사용하거나 노드당 패치를 사용할 수 있다. kubelet과
+대해서는 `Cluster Configuration` 구조에서 플래그를 사용하거나 노드당 패치를 사용할 수 있다. kubelet과
 kube-proxy의 경우, `KubeletConfiguration`과 `KubeProxyConfiguration`을 각각 사용할 수 있다.
 
 이 모든 옵션이 kubeadm 구성 API를 통해 가용하다.
 구성의 각 필드 상세 사항은
-[API 참조 페이지](https://godoc.org/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta3)에서 찾아볼 수 있다.
+[API 참조 페이지](/docs/reference/config-api/kubeadm-config.v1beta3/)에서 찾아볼 수 있다.
 
 {{< note >}}
 kubeadm의 CoreDNS 디플로이먼트 사용자 정의는 현재 제공되지 않는다.
@@ -24,9 +24,12 @@ kubeadm의 CoreDNS 디플로이먼트 사용자 정의는 현재 제공되지 �
 더 자세한 사항은 [kubeadm에서 초기화 단계 사용하기](/docs/reference/setup-tools/kubeadm/kubeadm-init/#init-phases)을 참고한다.
 {{< /note >}}
 
-<!-- body -->
+{{< note >}}
+이미 생성된 클러스터를 다시 구성하려면 
+[kubeadm 클러스터 다시 구성하기](/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/)를 참고한다.
+{{< /note >}}
 
-{{< feature-state for_k8s_version="v1.12" state="stable" >}}
+<!-- body -->
 
 ## `ClusterConfiguration`의 플래그로 컨트롤 플레인 사용자 정의하기
 
@@ -131,20 +134,19 @@ etcd:
       election-timeout: 1000
 ```
 
-## 패치를 통해 컨트롤 플레인 사용자 정의하기 {#patches}
+## 패치를 통해 사용자 정의하기 {#patches}
 
 {{< feature-state for_k8s_version="v1.22" state="beta" >}}
 
 Kubeadm을 사용하면 패치 파일이 있는 디렉토리를 개별 노드에 대한 `InitConfiguration`과 `JoinConfiguration`에
-전달할 수 있다. 이 패치는 컨트롤 플레인 컴포넌트 메니패스트가 디스크에 기록되기 전에
-최종 사용자 정의 단계로 사용될 수 있다.
+전달할 수 있다. 이 패치는 컴포넌트 구성이 디스크에 기록되기 전에 최종 사용자 정의 단계로
+사용될 수 있다.
 
 `--config <YOUR CONFIG YAML>`을 사용하여 이 파일을 `kubeadm init`에 전달할 수 있다.
 
 ```yaml
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: InitConfiguration
-nodeRegistration:
   patches:
     directory: /home/user/somedir
 ```
@@ -159,7 +161,6 @@ nodeRegistration:
 ```yaml
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: JoinConfiguration
-nodeRegistration:
   patches:
     directory: /home/user/somedir
 ```
@@ -167,7 +168,8 @@ nodeRegistration:
 디렉토리는 `target[suffix][+patchtype].extension` 형태의 파일을 포함해야 한다.
 예를 들면, `kube-apiserver0+merge.yaml` 또는 단순히 `etcd.json`의 형태이다.
 
-- `target`은 `kube-apiserver`, `kube-controller-manager`, `kube-scheduler` 그리고 `etcd` 중 하나가 될 수 있다.
+- `target`은 `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`, `etcd`
+그리고 `kubeletconfiguration` 중 하나가 될 수 있다.
 - `patchtype`은 `strategic`, `merge` 그리고 `json` 중 하나가 될 수 있으며
 [kubectl에서 지원하는](/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch) 패치 형식을 준수해야 한다.
 `patchtype`의 기본값은 `strategic`이다.
@@ -182,27 +184,29 @@ nodeRegistration:
 API 구조를 현재는 지원하지 않는다.
 {{< /note >}}
 
-## kubelet 사용자 정의하기
+## kubelet 사용자 정의하기 {#kubelet}
 
-kubelet을 사용자 정의하려면, `KubeletConfiguration`을 동일한 구성 파일 내에서 `---`로 구분된 `ClusterConfiguration`이나 `InitConfiguration` 다음에 추가하면
-된다. 그런 다음 `kubeadm init`에 해당 파일을 전달한다.
+kubelet을 사용자 정의하려면, [`KubeletConfiguration`](/docs/reference/config-api/kubelet-config.v1beta1/)을
+동일한 구성 파일 내에서 `---`로 구분된 `ClusterConfiguration`이나 `InitConfiguration` 다음에 추가하면 된다.
+그런 다음 `kubeadm init`에 해당 파일을 전달하면, kubeadm은 동일한 기본 `KubeletConfiguration`을
+클러스터의 모든 노드에 적용한다.
 
-{{< note >}}
-kubeadm은 클러스터의 모든 노드에 동일한 `KubeletConfiguration`을 적용한다. 노드별 설정을
-적용하려면 kubelet 플래그를 덮어쓰기(overrides)로 사용하여, `InitConfiguration` 및
-`JoinConfiguration` 모두에서 지원되는 `nodeRegistration.kubeletExtraArgs`에 전달할 수 있다.
-일부 kubelet 플래그는 더 이상 사용되지 않는다(deprecated). 따라서 사용하기 전에 [kubelet 참조 문서](/docs/reference/command-line-tools-reference/kubelet)를 통해
-상태를 확인해야 한다.
-{{< /note >}}
+기본 `KubeletConfiguration`에 더하여 인스턴스별 구성을 적용하기 위해서는 
+[`kubeletconfiguration` 패치 target](#patches)을 이용할 수 있다.
 
-자세한 사항은 [kubeadm을 통해 클러스터의 각 kubelet 구성하기](/docs/setup/production-environment/tools/kubeadm/kubelet-integration)에서 살펴본다.
+다른 방법으로는, kubelet 플래그를 덮어쓰기(overrides)로 사용하여,
+`InitConfiguration` 및 `JoinConfiguration` 모두에서 지원되는 `nodeRegistration.kubeletExtraArgs`에 전달할 수 있다.
+일부 kubelet 플래그는 더 이상 사용되지 않는다(deprecated). 따라서 사용하기 전에
+[kubelet 참조 문서](/docs/reference/command-line-tools-reference/kubelet)를 통해 상태를 확인해야 한다.
+
+이 외 더 자세한 사항은 [kubeadm을 통해 클러스터의 각 kubelet 구성하기](/docs/setup/production-environment/tools/kubeadm/kubelet-integration)에서 살펴본다.
 
 ## kube-proxy 사용자 정의하기
 
 kube-proxy를 사용자 정의하려면, `KubeProxyConfiguration`을 `---`로 구분된 `ClusterConfiguration`이나 `InitConfiguration`
 다음에 두고 `kubeadm init`에 전달하면 된다.
 
-자세한 사항은 [API 참조 페이지](https://godoc.org/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta3)에서 살펴볼 수 있다.
+자세한 사항은 [API 참조 페이지](/docs/reference/config-api/kubeadm-config.v1beta3/)에서 살펴볼 수 있다.
 
 {{< note >}}
 kubeadm은 kube-proxy를 {{< glossary_tooltip text="데몬셋" term_id="daemonset" >}}으로 배포한다. 이것은

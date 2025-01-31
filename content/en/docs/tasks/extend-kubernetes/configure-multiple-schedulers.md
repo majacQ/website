@@ -52,11 +52,13 @@ Save the file as `Dockerfile`, build the image and push it to a registry. This e
 pushes the image to
 [Google Container Registry (GCR)](https://cloud.google.com/container-registry/).
 For more details, please read the GCR
-[documentation](https://cloud.google.com/container-registry/docs/).
+[documentation](https://cloud.google.com/container-registry/docs/). Alternatively
+you can also use the [docker hub](https://hub.docker.com/search?q=). For more details
+refer to the docker hub [documentation](https://docs.docker.com/docker-hub/repos/create/#create-a-repository).
 
 ```shell
-docker build -t gcr.io/my-gcp-project/my-kube-scheduler:1.0 .
-gcloud docker -- push gcr.io/my-gcp-project/my-kube-scheduler:1.0
+docker build -t gcr.io/my-gcp-project/my-kube-scheduler:1.0 .     # The image name and the repository
+gcloud docker -- push gcr.io/my-gcp-project/my-kube-scheduler:1.0 # used in here is just an example
 ```
 
 ## Define a Kubernetes Deployment for the scheduler
@@ -69,17 +71,28 @@ for this example. A [Deployment](/docs/concepts/workloads/controllers/deployment
 thereby making the scheduler resilient to failures. Here is the deployment
 config. Save it as `my-scheduler.yaml`:
 
-{{< codenew file="admin/sched/my-scheduler.yaml" >}}
+{{% code_sample file="admin/sched/my-scheduler.yaml" %}}
 
-An important thing to note here is that the name of the scheduler specified as an
-argument to the scheduler command in the container spec should be unique. This is the name that is matched against the value of the optional `spec.schedulerName` on pods, to determine whether this scheduler is responsible for scheduling a particular pod.
+In the above manifest, you use a [KubeSchedulerConfiguration](/docs/reference/scheduling/config/)
+to customize the behavior of your scheduler implementation. This configuration has been passed to
+the `kube-scheduler` during initialization with the `--config` option. The `my-scheduler-config` ConfigMap stores the configuration file. The Pod of the`my-scheduler` Deployment mounts the `my-scheduler-config` ConfigMap as a volume.
 
-Note also that we created a dedicated service account `my-scheduler` and bind the cluster role
+In the aforementioned Scheduler Configuration, your scheduler implementation is represented via
+a [KubeSchedulerProfile](/docs/reference/config-api/kube-scheduler-config.v1/#kubescheduler-config-k8s-io-v1-KubeSchedulerProfile).
+{{< note >}}
+To determine if a scheduler is responsible for scheduling a specific Pod, the `spec.schedulerName` field in a 
+PodTemplate or Pod manifest must match the `schedulerName` field of the `KubeSchedulerProfile`.
+All schedulers running in the cluster must have unique names.
+{{< /note >}}
+
+Also, note that you create a dedicated service account `my-scheduler` and bind the ClusterRole
 `system:kube-scheduler` to it so that it can acquire the same privileges as `kube-scheduler`.
 
 Please see the
 [kube-scheduler documentation](/docs/reference/command-line-tools-reference/kube-scheduler/) for
-detailed description of other command line arguments.
+detailed description of other command line arguments and
+[Scheduler Configuration reference](/docs/reference/config-api/kube-scheduler-config.v1/) for
+detailed description of other customizable `kube-scheduler` configurations.
 
 ## Run the second scheduler in the cluster
 
@@ -110,11 +123,11 @@ pod in this list.
 
 To run multiple-scheduler with leader election enabled, you must do the following:
 
-First, update the following fields in your YAML file:
+Update the following fields for the KubeSchedulerConfiguration in the `my-scheduler-config` ConfigMap in your YAML file:
 
-* `--leader-elect=true`
-* `--lock-object-namespace=<lock-object-namespace>`
-* `--lock-object-name=<lock-object-name>`
+* `leaderElection.leaderElect` to `true`
+* `leaderElection.resourceNamespace` to `<lock-object-namespace>`
+* `leaderElection.resourceName` to `<lock-object-name>`
 
 {{< note >}}
 The control plane creates the lock objects for you, but the namespace must already exist.
@@ -128,7 +141,7 @@ Add your scheduler name to the resourceNames of the rule applied for `endpoints`
 kubectl edit clusterrole system:kube-scheduler
 ```
 
-{{< codenew file="admin/sched/clusterrole.yaml" >}}
+{{% code_sample file="admin/sched/clusterrole.yaml" %}}
 
 ## Specify schedulers for pods
 
@@ -139,7 +152,7 @@ scheduler in that pod spec. Let's look at three examples.
 
 - Pod spec without any scheduler name
 
-  {{< codenew file="admin/sched/pod1.yaml" >}}
+  {{% code_sample file="admin/sched/pod1.yaml" %}}
 
   When no scheduler name is supplied, the pod is automatically scheduled using the
   default-scheduler.
@@ -152,7 +165,7 @@ scheduler in that pod spec. Let's look at three examples.
 
 - Pod spec with `default-scheduler`
 
-  {{< codenew file="admin/sched/pod2.yaml" >}}
+  {{% code_sample file="admin/sched/pod2.yaml" %}}
 
   A scheduler is specified by supplying the scheduler name as a value to `spec.schedulerName`. In this case, we supply the name of the
   default scheduler which is `default-scheduler`.
@@ -165,11 +178,11 @@ scheduler in that pod spec. Let's look at three examples.
 
 - Pod spec with `my-scheduler`
 
-  {{< codenew file="admin/sched/pod3.yaml" >}}
+  {{% code_sample file="admin/sched/pod3.yaml" %}}
 
   In this case, we specify that this pod should be scheduled using the scheduler that we
-  deployed - `my-scheduler`. Note that the value of `spec.schedulerName` should match the name supplied to the scheduler
-  command as an argument in the deployment config for the scheduler.
+  deployed - `my-scheduler`. Note that the value of `spec.schedulerName` should match the name supplied for the scheduler
+  in the `schedulerName` field of the mapping `KubeSchedulerProfile`.
 
   Save this file as `pod3.yaml` and submit it to the Kubernetes cluster.
 

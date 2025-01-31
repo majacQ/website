@@ -1,319 +1,448 @@
 ---
 title: Set up Ingress on Minikube with the NGINX Ingress Controller
 content_type: task
-weight: 100
+weight: 110
+min-kubernetes-server-version: 1.19
 ---
 
 <!-- overview -->
 
-An [Ingress](/docs/concepts/services-networking/ingress/) is an API object that defines rules which allow external access
-to services in a cluster. An [Ingress controller](/docs/concepts/services-networking/ingress-controllers/) fulfills the rules set in the Ingress.
+An [Ingress](/docs/concepts/services-networking/ingress/) is an API object that defines rules
+which allow external access to services in a cluster. An
+[Ingress controller](/docs/concepts/services-networking/ingress-controllers/)
+fulfills the rules set in the Ingress.
 
-This page shows you how to set up a simple Ingress which routes requests to Service web or web2 depending on the HTTP URI.
-
-
+This page shows you how to set up a simple Ingress which routes requests to Service 'web' or
+'web2' depending on the HTTP URI.
 
 ## {{% heading "prerequisites" %}}
 
+This tutorial assumes that you are using `minikube` to run a local Kubernetes cluster.
+Visit [Install tools](/docs/tasks/tools/#minikube) to learn how to install `minikube`.
+
+{{< note >}}
+This tutorial uses a container that requires the AMD64 architecture. 
+If you are using minikube on a computer with a different CPU architecture,
+you could try using minikube with a driver that can emulate AMD64.
+For example, the Docker Desktop driver can do this.
+{{< /note >}}
 
 {{< include "task-tutorial-prereqs.md" >}} {{< version-check >}}
+If you are using an older Kubernetes version, switch to the documentation for that version.
 
+### Create a minikube cluster
+
+If you haven't already set up a cluster locally, run `minikube start` to create a cluster.
 
 
 <!-- steps -->
-
-## Create a Minikube cluster
-
-1. Click **Launch Terminal**
-
-    {{< kat-button >}}
-
-1. (Optional) If you installed Minikube locally, run the following command:
-
-    ```shell
-    minikube start
-    ```
 
 ## Enable the Ingress controller
 
 1. To enable the NGINX Ingress controller, run the following command:
 
-    ```shell
-    minikube addons enable ingress
-    ```
+   ```shell
+   minikube addons enable ingress
+   ```
 
 1. Verify that the NGINX Ingress controller is running
 
+   ```shell
+   kubectl get pods -n ingress-nginx
+   ```
 
-  {{< tabs name="tab_with_md" >}}
-  {{% tab name="minikube v1.19 or later" %}}
-```shell
-kubectl get pods -n ingress-nginx
-```
-  {{< note >}}This can take up to a minute.{{< /note >}}
+   {{< note >}}
+   It can take up to a minute before you see these pods running OK.
+   {{< /note >}}
 
-Output:
+   The output is similar to:
 
-```
-NAME                                        READY   STATUS      RESTARTS    AGE
-ingress-nginx-admission-create-g9g49        0/1     Completed   0          11m
-ingress-nginx-admission-patch-rqp78         0/1     Completed   1          11m
-ingress-nginx-controller-59b45fb494-26npt   1/1     Running     0          11m
-```
-    {{% /tab %}}
-
-  {{% tab name="minikube v1.18.1 or earlier" %}}
-```shell
-kubectl get pods -n kube-system
-```
-{{< note >}}This can take up to a minute.{{< /note >}}
-
-Output:
-
-```
-NAME                                        READY     STATUS    RESTARTS   AGE
-default-http-backend-59868b7dd6-xb8tq       1/1       Running   0          1m
-kube-addon-manager-minikube                 1/1       Running   0          3m
-kube-dns-6dcb57bcc8-n4xd4                   3/3       Running   0          2m
-kubernetes-dashboard-5498ccf677-b8p5h       1/1       Running   0          2m
-nginx-ingress-controller-5984b97644-rnkrg   1/1       Running   0          1m
-storage-provisioner                         1/1       Running   0          2m
-```
-    {{% /tab %}}
-      {{< /tabs >}}
-  
-
-
-    ```shell
-    kubectl get pods -n ingress-nginx
-    ```
-
-    {{< note >}}This can take up to a minute.{{< /note >}}
-
-    Output:
-
-    ```shell
-    NAME                                        READY   STATUS      RESTARTS   AGE
-    ingress-nginx-admission-create-2tgrf        0/1     Completed   0          3m28s
-    ingress-nginx-admission-patch-68b98         0/1     Completed   0          3m28s
-    ingress-nginx-controller-59b45fb494-lzmw2   1/1     Running     0          3m28s
-    ```
-
+   ```none
+   NAME                                        READY   STATUS      RESTARTS    AGE
+   ingress-nginx-admission-create-g9g49        0/1     Completed   0          11m
+   ingress-nginx-admission-patch-rqp78         0/1     Completed   1          11m
+   ingress-nginx-controller-59b45fb494-26npt   1/1     Running     0          11m
+   ```
 
 ## Deploy a hello, world app
 
 1. Create a Deployment using the following command:
 
-    ```shell
-    kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
-    ```
+   ```shell
+   kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
+   ```
 
-    Output:
+   The output should be:
 
-    ```shell
-    deployment.apps/web created
-    ```
+   ```none
+   deployment.apps/web created
+   ```
+   
+   Verify that the Deployment is in a Ready state:
+   
+   ```shell
+   kubectl get deployment web 
+   ```  
+
+   The output should be similar to:
+
+   ```none
+   NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+   web    1/1     1            1           53s
+   ``` 
+    
+    
 
 1. Expose the Deployment:
 
-    ```shell
-    kubectl expose deployment web --type=NodePort --port=8080
-    ```
+   ```shell
+   kubectl expose deployment web --type=NodePort --port=8080
+   ```
 
-    Output:
+   The output should be:
 
-    ```shell
-    service/web exposed
-    ```
+   ```none
+   service/web exposed
+   ```
 
 1. Verify the Service is created and is available on a node port:
 
-    ```shell
-    kubectl get service web
-    ```
+   ```shell
+   kubectl get service web
+   ```
 
-    Output:
+   The output is similar to:
 
-    ```shell
-    NAME      TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
-    web       NodePort   10.104.133.249   <none>        8080:31637/TCP   12m
-    ```
+   ```none
+   NAME      TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+   web       NodePort   10.104.133.249   <none>        8080:31637/TCP   12m
+   ```
 
-1. Visit the service via NodePort:
+1. Visit the Service via NodePort, using the [`minikube service`](https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-service-with-tunnel) command. Follow the instructions for your platform:
 
-    ```shell
-    minikube service web --url
-    ```
+   {{< tabs name="minikube_service" >}}
+   {{% tab name="Linux" %}}
+   
+   ```shell
+   minikube service web --url
+   ```
+   The output is similar to:
+   ```none
+   http://172.17.0.15:31637
+   ```
+   Invoke the URL obtained in the output of the previous step:
+   ```shell
+   curl http://172.17.0.15:31637 
+   ```
+   {{% /tab %}}
+   {{% tab name="MacOS" %}}
+   ```shell
+   # The command must be run in a separate terminal.
+   minikube service web --url 
+   ```
+   The output is similar to:
+   ```none
+   http://127.0.0.1:62445
+   ! Because you are using a Docker driver on darwin, the terminal needs to be open to run it.
+   ```
+   From a different terminal, invoke the URL obtained in the output of the previous step:
+   ```shell
+   curl http://127.0.0.1:62445 
+   ```
+   {{% /tab %}}
+   {{< /tabs >}}
+   <br>
+   The output is similar to:
 
-    Output:
+   ```none
+   Hello, world!
+   Version: 1.0.0
+   Hostname: web-55b8c6998d-8k564
+   ```
 
-    ```shell
-    http://172.17.0.15:31637
-    ```
+   You can now access the sample application via the Minikube IP address and NodePort.
+   The next step lets you access the application using the Ingress resource.
 
-    {{< note >}}Katacoda environment only: at the top of the terminal panel, click the plus sign, and then click **Select port to view on Host 1**. Enter the NodePort, in this case `31637`, and then click **Display Port**.{{< /note >}}
+## Create an Ingress
 
-    Output:
-
-    ```shell
-    Hello, world!
-    Version: 1.0.0
-    Hostname: web-55b8c6998d-8k564
-    ```
-
-    You can now access the sample app via the Minikube IP address and NodePort. The next step lets you access
-    the app using the Ingress resource.
-
-## Create an Ingress resource
-
-The following file is an Ingress resource that sends traffic to your Service via hello-world.info.
+The following manifest defines an Ingress that sends traffic to your Service via
+`hello-world.example`.
 
 1. Create `example-ingress.yaml` from the following file:
 
-  {{< codenew file="service/networking/example-ingress.yaml" >}}
+   {{% code_sample file="service/networking/example-ingress.yaml" %}}
 
-1. Create the Ingress resource by running the following command:
+1. Create the Ingress object by running the following command:
 
-    ```shell
-    kubectl apply -f https://k8s.io/examples/service/networking/example-ingress.yaml
-    ```
+   ```shell
+   kubectl apply -f https://k8s.io/examples/service/networking/example-ingress.yaml
+   ```
 
-    Output:
+   The output should be:
 
-    ```shell
-    ingress.networking.k8s.io/example-ingress created
-    ```
+   ```none
+   ingress.networking.k8s.io/example-ingress created
+   ```
 
 1. Verify the IP address is set:
 
-    ```shell
-    kubectl get ingress
-    ```
+   ```shell
+   kubectl get ingress
+   ```
 
-    {{< note >}}This can take a couple of minutes.{{< /note >}}
+   {{< note >}}
+   This can take a couple of minutes.
+   {{< /note >}}
 
-    ```shell
-    NAME              CLASS    HOSTS              ADDRESS        PORTS   AGE
-    example-ingress   <none>   hello-world.info   172.17.0.15    80      38s
-    ```
+   You should see an IPv4 address in the `ADDRESS` column; for example:
 
-1. Add the following line to the bottom of the `/etc/hosts` file.
+   ```none
+   NAME              CLASS   HOSTS                 ADDRESS        PORTS   AGE
+   example-ingress   nginx   hello-world.example   172.17.0.15    80      38s
+   ```
 
-    {{< note >}}If you are running Minikube locally, use `minikube ip` to get the external IP. The IP address displayed within the ingress list will be the internal IP.{{< /note >}}
 
-    ```
-    172.17.0.15 hello-world.info
-    ```
+1. Verify that the Ingress controller is directing traffic, by following the instructions for your platform:
 
-    This sends requests from hello-world.info to Minikube.
+   {{< note >}}
+   The network is limited if using the Docker driver on MacOS (Darwin) and the Node IP is not reachable directly. To get ingress to work you’ll need to open a new terminal and run `minikube tunnel`.  
+   `sudo` permission is required for it, so provide the password when prompted. 
+   {{< /note >}}    
 
-1. Verify that the Ingress controller is directing traffic:
 
-    ```shell
-    curl hello-world.info
-    ```
+   {{< tabs name="ingress" >}}
+   {{% tab name="Linux" %}}
 
-    Output:
+   ```shell
+   curl --resolve "hello-world.example:80:$( minikube ip )" -i http://hello-world.example
+   ```
+   {{% /tab %}}
+   {{% tab name="MacOS" %}}
 
-    ```shell
-    Hello, world!
-    Version: 1.0.0
-    Hostname: web-55b8c6998d-8k564
-    ```
+   ```shell
+   minikube tunnel
+   ```
+   The output is similar to:
 
-    {{< note >}}If you are running Minikube locally, you can visit hello-world.info from your browser.{{< /note >}}
+   ```none
+   Tunnel successfully started
 
-## Create Second Deployment
+   NOTE: Please do not close this terminal as this process must stay alive for the tunnel to be accessible ...
 
-1. Create a v2 Deployment using the following command:
+   The service/ingress example-ingress requires privileged ports to be exposed: [80 443]
+   sudo permission will be asked for it.
+   Starting tunnel for service example-ingress.
+   ```
 
-    ```shell
-    kubectl create deployment web2 --image=gcr.io/google-samples/hello-app:2.0
-    ```
-    Output:
+   From within a new terminal, invoke the following command:
+   ```shell
+   curl --resolve "hello-world.example:80:127.0.0.1" -i http://hello-world.example
+   ```
 
-    ```shell
-    deployment.apps/web2 created
-    ```
+   {{% /tab %}}
+  {{< /tabs >}}
+   <br>
+   You should see:
 
-1. Expose the Deployment:
+   ```none
+   Hello, world!
+   Version: 1.0.0
+   Hostname: web-55b8c6998d-8k564
+   ```
 
-    ```shell
-    kubectl expose deployment web2 --port=8080 --type=NodePort
-    ```
+1. Optionally, you can also visit `hello-world.example` from your browser.
 
-    Output:
+   Add a line to the bottom of the `/etc/hosts` file on
+     your computer (you will need administrator access):
 
-    ```shell
-    service/web2 exposed
-    ```
+     {{< tabs name="hosts" >}}
+     {{% tab name="Linux" %}}
+   Look up the external IP address as reported by minikube
+   ```none
+     minikube ip 
+   ``` 
+   <br>
 
-## Edit Ingress
+   ```none
+     172.17.0.15 hello-world.example
+   ```
+   
+   {{< note >}}
+   Change the IP address to match the output from `minikube ip`.
+   {{< /note >}}
+   {{% /tab %}}
+     {{% tab name="MacOS" %}} 
+   ```none
+   127.0.0.1 hello-world.example
+   ```
+     {{% /tab %}}
+     {{< /tabs >}}
+   
+     <br>
+   
+     After you make this change, your web browser sends requests for
+     `hello-world.example` URLs to Minikube.
 
-1. Edit the existing `example-ingress.yaml` and add the following lines:
+## Create a second Deployment
+
+1. Create another Deployment using the following command:
+
+   ```shell
+   kubectl create deployment web2 --image=gcr.io/google-samples/hello-app:2.0
+   ```
+
+   The output should be:
+
+   ```none
+   deployment.apps/web2 created
+   ```
+   Verify that the Deployment is in a Ready state:
+
+   ```shell
+   kubectl get deployment web2 
+   ```  
+
+   The output should be similar to:
+
+   ```none
+   NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+   web2   1/1     1            1           16s
+   ``` 
+
+1. Expose the second Deployment:
+
+   ```shell
+   kubectl expose deployment web2 --port=8080 --type=NodePort
+   ```
+
+   The output should be:
+
+   ```none
+   service/web2 exposed
+   ```
+
+## Edit the existing Ingress {#edit-ingress}
+
+1. Edit the existing `example-ingress.yaml` manifest, and add the
+   following lines at the end:
 
     ```yaml
-          - path: /v2
-            pathType: Prefix
-            backend:
-              service:
-                name: web2
-                port:
-                  number: 8080
+    - path: /v2
+      pathType: Prefix
+      backend:
+        service:
+          name: web2
+          port:
+            number: 8080
     ```
 
 1. Apply the changes:
 
-    ```shell
-    kubectl apply -f example-ingress.yaml
-    ```
+   ```shell
+   kubectl apply -f example-ingress.yaml
+   ```
 
-    Output:
+   You should see:
 
-    ```shell
-    ingress.networking/example-ingress configured
-    ```
+   ```none
+   ingress.networking/example-ingress configured
+   ```
 
-## Test Your Ingress
+## Test your Ingress
 
 1. Access the 1st version of the Hello World app.
 
-    ```shell
-    curl hello-world.info
-    ```
+   {{< tabs name="ingress2-v1" >}}
+   {{% tab name="Linux" %}}
 
-    Output:
+   ```shell
+   curl --resolve "hello-world.example:80:$( minikube ip )" -i http://hello-world.example
+   ```
+   {{% /tab %}}
+   {{% tab name="MacOS" %}}
 
-    ```shell
-    Hello, world!
-    Version: 1.0.0
-    Hostname: web-55b8c6998d-8k564
-    ```
+   ```shell
+   minikube tunnel
+   ```
+   The output is similar to:
+
+   ```none
+   Tunnel successfully started
+
+   NOTE: Please do not close this terminal as this process must stay alive for the tunnel to be accessible ...
+
+   The service/ingress example-ingress requires privileged ports to be exposed: [80 443]
+   sudo permission will be asked for it.
+   Starting tunnel for service example-ingress.
+   ```
+
+   From within a new terminal, invoke the following command:
+   ```shell
+   curl --resolve "hello-world.example:80:127.0.0.1" -i http://hello-world.example
+   ```
+
+   {{% /tab %}}
+   {{< /tabs >}}
+   <br>
+
+   The output is similar to:
+
+   ```none
+   Hello, world!
+   Version: 1.0.0
+   Hostname: web-55b8c6998d-8k564
+   ```
 
 1. Access the 2nd version of the Hello World app.
 
-    ```shell
-    curl hello-world.info/v2
-    ```
+   {{< tabs name="ingress2-v2" >}}
+   {{% tab name="Linux" %}}
 
-    Output:
+   ```shell
+   curl --resolve "hello-world.example:80:$( minikube ip )" -i http://hello-world.example/v2
+   ```
+   {{% /tab %}}
+   {{% tab name="MacOS" %}}
 
-    ```shell
-    Hello, world!
-    Version: 2.0.0
-    Hostname: web2-75cd47646f-t8cjk
-    ```
+   ```shell
+   minikube tunnel
+   ```
+   The output is similar to:
 
-    {{< note >}}If you are running Minikube locally, you can visit hello-world.info and hello-world.info/v2 from your browser.{{< /note >}}
+   ```none
+   Tunnel successfully started
 
+   NOTE: Please do not close this terminal as this process must stay alive for the tunnel to be accessible ...
 
+   The service/ingress example-ingress requires privileged ports to be exposed: [80 443]
+   sudo permission will be asked for it.
+   Starting tunnel for service example-ingress.
+   ```
 
+   From within a new terminal, invoke the following command:
+   ```shell
+   curl --resolve "hello-world.example:80:127.0.0.1" -i http://hello-world.example/v2
+   ```
+
+   {{% /tab %}}
+   {{< /tabs >}}
+
+   The output is similar to:
+
+   ```none
+   Hello, world!
+   Version: 2.0.0
+   Hostname: web2-75cd47646f-t8cjk
+   ```
+
+   {{< note >}}
+   If you did the optional step to update `/etc/hosts`, you can also visit `hello-world.example` and
+   `hello-world.example/v2` from your browser.
+   {{< /note >}}
 
 ## {{% heading "whatsnext" %}}
 
 * Read more about [Ingress](/docs/concepts/services-networking/ingress/)
 * Read more about [Ingress Controllers](/docs/concepts/services-networking/ingress-controllers/)
 * Read more about [Services](/docs/concepts/services-networking/service/)
-
-
 
